@@ -70,6 +70,11 @@ class DeterministicRuleChecker:
         if subnet_res:
             results.append(subnet_res)
 
+        # 7. Authentication & Security Check (RADIUS / 802.1X / Port Security)
+        auth_res = self._check_authentication_failure(combined_text)
+        if auth_res:
+            results.append(auth_res)
+
         return [r.to_dict() for r in results]
 
     def _check_interface_down(self, text: str) -> Optional[RuleCheckResult]:
@@ -238,3 +243,33 @@ class DeterministicRuleChecker:
             evidence="Subnet mask parameters consistent.",
             recommendation="Subnet configuration verified."
         )
+
+    def _check_authentication_failure(self, text: str) -> Optional[RuleCheckResult]:
+        radius_mismatch = re.search(r'Shared Secret\s*(Incorrect|Mismatch|\*\*\*\*)', text, re.IGNORECASE)
+        auth_failed = re.search(r'(fails|failed)\s*authentication|Status stays on [\'"]Authenticating[\'"]', text, re.IGNORECASE)
+        port_security = re.search(r'Port security violation|unauthorized MAC address', text, re.IGNORECASE)
+
+        if radius_mismatch or auth_failed or port_security:
+            evidence_parts = []
+            if radius_mismatch:
+                evidence_parts.append("RADIUS Shared Secret mismatch detected on WLC/AAA log")
+            if auth_failed:
+                evidence_parts.append("802.1X client authentication failure detected ('Authenticating...' status)")
+            if port_security:
+                evidence_parts.append("Port security violation triggered on switch interface")
+
+            return RuleCheckResult(
+                rule="authentication_failure",
+                status="failed",
+                severity="high",
+                evidence=" | ".join(evidence_parts),
+                recommendation="Verify RADIUS shared secret on WLC/Switch and AAA server (FreeRADIUS/NPS) and check 802.1X/Port-Security policy."
+            )
+        return RuleCheckResult(
+            rule="authentication_failure",
+            status="passed",
+            severity="low",
+            evidence="No authentication errors or RADIUS mismatches detected.",
+            recommendation="Authentication services verified."
+        )
+

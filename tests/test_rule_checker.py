@@ -47,3 +47,13 @@ def test_missing_route_detection():
     results = checker.analyze(show_outputs=show_output)
     failed = [r for r in results if r["status"] == "failed"]
     assert any(r["rule"] == "missing_route" for r in failed)
+
+
+def test_authentication_failure_detection():
+    checker = DeterministicRuleChecker()
+    show_output = "Shared Secret (Mismatch detected on WLC log: Shared Secret Incorrect)"
+    symptom = "Laptop fails authentication when joining SSID 'Corp-Secure'. Status stays on 'Authenticating...'"
+    results = checker.analyze(show_outputs=show_output, symptom=symptom)
+    failed = [r for r in results if r["status"] == "failed"]
+    assert any(r["rule"] == "authentication_failure" for r in failed)
+
