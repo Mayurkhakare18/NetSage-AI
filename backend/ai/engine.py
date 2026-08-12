@@ -316,7 +316,8 @@ class LiveAIDiagnosisEngine(BaseAIDiagnosisEngine):
                  rule_checks: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         
         # Load diagnose_prompt.md
-        prompt_path = os.path.join("prompts", "diagnose_prompt.md")
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        prompt_path = os.path.join(base_dir, "prompts", "diagnose_prompt.md")
         system_instructions = ""
         if os.path.exists(prompt_path):
             with open(prompt_path, "r", encoding="utf-8") as f:

@@ -12,7 +12,10 @@ def seed_database():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
-    csv_path = os.path.join("data", "cases.csv")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    csv_path = os.path.join(base_dir, "data", "cases.csv")
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join("data", "cases.csv")
     if not os.path.exists(csv_path):
         print(f"Error: {csv_path} not found.")
         return
